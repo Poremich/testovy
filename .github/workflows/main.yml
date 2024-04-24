@@ -1,49 +1,41 @@
-name: semgrep-sast-scan-and-import-to-defectdojo
-on:
-  push
-jobs:
-  semgrep-sast-scan:
-    name: semgrep sast scan
-    runs-on: ubuntu-latest
-    container:
-      image: returntocorp/semgrep
-    if: (github.actor != 'dependabot[bot]')
-    steps:
-      - name: checkout
-        id: checkout
-        uses: actions/checkout@v3
-      - name: semgrep scan
-        id: semgrep-scan
-        run: |
-          mkdir -p semgrep/results
-          semgrep --config auto --error --json --output=semgrep/results/semgrep.json
-      - name: upload semgrep results
-        id: upload-semgrep-results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: semgrep-results
-          path: semgrep/results/
+name: Security Scan and Reporting
 
-  import-semgrep-report:
-    name: import semgrep report
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  security_scan_and_report:
     runs-on: ubuntu-latest
     steps:
-      - name: download scan results artifact
-        id: download-scan-results-artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: semgrep-results
-      - name: import scan results into defectdojo
-        id: import-scan-results-into-defectdojo
-        uses: portswigger-cloud/defectdojo-import-scan@v1.0.1
-        with:
-          defectdojo-url: http://localhost:8080
-          defectdojo-username: kali
-          defectdojo-password: 6NhKJh66A2dhutK1g99y4b
-          defectdojo-product-type: Research and Development
-          defectdojo-product: JuiceShop
-          defectdojo-environment-type: Production
-          defectdojo-scan-type: Semgrep JSON Report
-          defectdojo-engagement-name: Github Actions Initiated SAST Scan
-          scan-results-file-name: semgrep.json
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step for running SAST scan
+      - name: Run SAST scan
+        run: |
+          # Команда для запуску SAST сканера та збереження звіту у JSON форматі
+          # Наприклад, використання CodeQL
+          codeql analyze --format=sarif ./path/to/source-code
+          mv codeql_results.sarif sast-report.json
+
+      # Step for running DAST scan
+      - name: Run DAST scan
+        run: |
+          # Команда для запуску DAST сканера та збереження звіту у JSON форматі
+          # Наприклад, використання OWASP ZAP
+          zap-baseline.py -t http://localhost:3000/#/ -r dast-report.json
+
+      # Step for sending SAST report to DefectDojo
+      - name: Send SAST report to DefectDojo
+        run: |
+          defectdojo-cli import sast-report --file sast-report.json --api-key 7addd800d84db0f94778bf1f42c45b041801cf9b --url http://localhost:8080
+
+      # Step for sending DAST report to DefectDojo
+      - name: Send DAST report to DefectDojo
+        run: |
+          defectdojo-cli import dast-report --file dast-report.json --api-key 7addd800d84db0f94778bf1f42c45b041801cf9b --url http://localhost:8080
