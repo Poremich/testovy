@@ -1,3 +1,5 @@
+              - name: defectdojo import report
+                uses: portswigger-cloud/defectdojo-import-scan@v1.0.1
 name: semgrep-sast-scan-and-import-to-defectdojo
 on:
   push
@@ -38,11 +40,11 @@ jobs:
         id: import-scan-results-into-defectdojo
         uses: portswigger-cloud/defectdojo-github-action@v1
         with:
-          defectdojo-url: http://localhost:8080
-          defectdojo-username: kali
-          defectdojo-password: 6NhKJh66A2dhutK1g99y4b
-          defectdojo-product-type: Research and Development
-          defectdojo-product: JuiceShop
+          defectdojo-url: https://defectdojo.example.con
+          defectdojo-username: ${{ secrets.defectdojo-username }}
+          defectdojo-password: ${{ secrets.defectdojo-password }}
+          defectdojo-product-type: example-product-type
+          defectdojo-product: example-product
           defectdojo-environment-type: Production
           defectdojo-scan-type: Semgrep JSON Report
           defectdojo-engagement-name: Github Actions Initiated SAST Scan
